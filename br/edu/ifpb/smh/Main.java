@@ -1,52 +1,81 @@
 package br.edu.ifpb.smh;
 
 import br.edu.ifpb.smh.dto.*;
-import br.edu.ifpb.smh.facade.ISMH_Facade;
-import br.edu.ifpb.smh.facade.impl.SMH_FacadeImpl;
-import br.edu.ifpb.smh.hardware.SimuladorSHA;
-import br.edu.ifpb.smh.services.SensorService;
-import java.util.Date;
+import br.edu.ifpb.smh.facade.MonitoramentoFacade;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Scanner;
 
 public class Main {
-    public static void main(String[] args) throws InterruptedException {
-        System.out.println("=== 🚰 PAINEL DE MONITORAMENTO SMH (IFPB) ===");
+    public static void main(String[] args) {
+        System.out.println("==================================================");
+        System.out.println("   SISTEMA DE MONITORAMENTO DE HIDRÔMETROS (SMH)  ");
+        System.out.println("   Iniciando via Console...");
+        System.out.println("==================================================");
 
-        // 1. Setup da Infraestrutura
-        SensorService sensorCompartilhado = new SensorService();
-        ISMH_Facade painel = new SMH_FacadeImpl(sensorCompartilhado);
+        // 1. Instancia a Fachada (O único ponto de contato)
+        MonitoramentoFacade facade = new MonitoramentoFacade();
 
-        // 2. Configuração (Facade em ação)
-        UsuarioDTO u1 = painel.criarUsuario(new NovoUsuarioRequest("Renato", "123"));
-        UsuarioDTO u2 = painel.criarUsuario(new NovoUsuarioRequest("Maria", "456"));
+        // 2. Inicia o motor de monitoramento (Threads de OCR)
+        facade.iniciarMonitoramento();
 
-        // 3. Hardware Físico (Simuladores)
-        SimuladorSHA hardware1 = new SimuladorSHA("SHA-RENATO-01", 1000.0);
-        SimuladorSHA hardware2 = new SimuladorSHA("SHA-MARIA-02", 500.0);
+        try {
+            // -----------------------------------------------------------
+            // CENÁRIO 1: CADASTRO (RF-001)
+            // -----------------------------------------------------------
+            System.out.println("\n>>> [PASSO 1] Criando Usuário e Vinculando SHAs...");
 
-        painel.vincularShaAoUsuario(u1.getId(), hardware1.getId(), "Cozinha");
-        painel.vincularShaAoUsuario(u2.getId(), hardware2.getId(), "Jardim");
+            NovoUsuarioRequest novoUser = new NovoUsuarioRequest(
+                    "Arthur Siqueira", "123.456.789-00", "arthur@email.com", "Rua do Projeto, 100"
+            );
+            UsuarioDTO usuario = facade.criarUsuario(novoUser);
 
-        // 4. Execução (Loop de 3 ciclos)
-        for (int i = 1; i <= 3; i++) {
-            System.out.println("\n--- CICLO DE LEITURA " + i + " ---");
+            // VINCULANDO OS SENSORES (IDs devem bater com o SensorService)
+            // Vincula o simulador de arquivo único
+            facade.vincularShaAoUsuario(usuario.getId(), "SHA-ARTHUR-01", "Jardim");
+            // Vincula o simulador de pasta
+            //facade.vincularShaAoUsuario(usuario.getId(), "SHA-TAC-01", "Cozinha");
 
-            // A: Sensores enviam dados
-            sensorCompartilhado.registrarLeitura(hardware1.getId(), hardware1.realizarLeitura());
-            sensorCompartilhado.registrarLeitura(hardware2.getId(), hardware2.realizarLeitura());
+            // -----------------------------------------------------------
+            // CENÁRIO 2: CONFIGURAÇÃO DE REGRAS (RF-003)
+            // -----------------------------------------------------------
+            System.out.println("\n>>> [PASSO 2] Configurando Regras de Alerta...");
 
-            // B: Painel consulta dados
-            System.out.println(">> App do Renato consulta: "
-                    + String.format("%.2f", painel.getConsumoPorSha(hardware1.getId(), new Date(), new Date()).getValorTotal()) + " L");
+            // Define limite baixo (0.010 m3) para testar o disparo fácil
+            List<String> canais = Arrays.asList("EMAIL", "WEBHOOK");
+            ConfigAlertaRequest config = new ConfigAlertaRequest(
+                    usuario.getId(), 0.010, 24, canais, Arrays.asList("admin@cagepa.com.br")
+            );
 
-            System.out.println(">> App da Maria consulta:  "
-                    + String.format("%.2f", painel.getConsumoPorSha(hardware2.getId(), new Date(), new Date()).getValorTotal()) + " L");
+            facade.configurarRegraAlerta(config);
 
-            Thread.sleep(1000);
+            // -----------------------------------------------------------
+            // CENÁRIO 3: MONITORAMENTO EM TEMPO REAL
+            // -----------------------------------------------------------
+            System.out.println("\n>>> [SISTEMA RODANDO] Aguardando leituras dos simuladores...");
+            System.out.println("    (Abra seu simulador e gere imagens agora!)");
+            System.out.println("    Digite 'sair' para encerrar ou 'status' para ver alertas.");
+
+            Scanner scanner = new Scanner(System.in);
+            while (true) {
+                String comando = scanner.nextLine();
+
+                if (comando.equalsIgnoreCase("sair")) {
+                    System.out.println("Encerrando sistema...");
+                    System.exit(0);
+                }
+                else if (comando.equalsIgnoreCase("status")) {
+                    List<AlertaAtivoDTO> alertas = facade.getAlertasAtivos();
+                    System.out.println("\n--- STATUS ATUAL ---");
+                    if(alertas.isEmpty()) System.out.println("Nenhum alerta ativo. Consumo normal.");
+                    alertas.forEach(System.out::println);
+                    System.out.println("--------------------\n");
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
-        // 5. Teste do Strategy
-        System.out.println("\n--- TESTE DE NOTIFICAÇÃO (STRATEGY) ---");
-        painel.dispararNotificacao(new Alerta("Vazamento Detectado!", "EMAIL"));
-        painel.dispararNotificacao(new Alerta("Erro de Conexão!", "WEBHOOK"));
     }
 }

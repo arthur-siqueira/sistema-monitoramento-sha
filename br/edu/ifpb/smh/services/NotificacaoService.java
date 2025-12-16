@@ -1,23 +1,31 @@
 package br.edu.ifpb.smh.services;
 
+import br.edu.ifpb.smh.dto.Alerta;
 import br.edu.ifpb.smh.strategy.*;
 import java.util.HashMap;
 import java.util.Map;
 
 public class NotificacaoService {
-    private Map<String, CanalNotificacaoStrategy> estrategias = new HashMap<>();
+
+    private final Map<String, CanalNotificacaoStrategy> estrategias = new HashMap<>();
 
     public NotificacaoService() {
+        // Registra as estratégias disponíveis no sistema
         estrategias.put("EMAIL", new EmailStrategy());
         estrategias.put("WEBHOOK", new WebhookStrategy());
+        // Se quiser adicionar SMS depois, é só criar SmsStrategy e registrar aqui
     }
 
-    public void notificar(String mensagem, String destino, String canal) {
-        CanalNotificacaoStrategy estrategia = estrategias.get(canal.toUpperCase());
-        if (estrategia != null) {
-            estrategia.enviar(mensagem, destino);
-        } else {
-            System.out.println("ERRO: Canal de notificação não suportado: " + canal);
+    public void enviarNotificacao(Alerta alerta) {
+        // Para cada canal configurado no alerta (ex: ["EMAIL", "WEBHOOK"])
+        for (String canal : alerta.getCanaisEnvio()) {
+            CanalNotificacaoStrategy estrategia = estrategias.get(canal.toUpperCase());
+
+            if (estrategia != null) {
+                estrategia.enviar(alerta);
+            } else {
+                System.out.println("ERRO: Canal de notificação não suportado: " + canal);
+            }
         }
     }
 }
