@@ -27,23 +27,19 @@ public class Main {
             System.out.println("    Usuário ID: " + usuario.getId());
 
             // --- VINCULANDO TUDO AO MESMO USUÁRIO ---
-            System.out.println("\n>>> [PASSO 2] Vinculando Sensores à Residência...");
 
-            // 1. Arthur (Arquivo) -> Jardim
+            // 1. Arthur (Arquivo)
             facade.vincularShaAoUsuario(usuario.getId(), "SHA-ARTHUR-01", "Apartamento (Sensor Arthur)");
 
-            // 2. Cefras (Pasta) -> Cozinha
+            // 2. Cefras (Pasta)
             facade.vincularShaAoUsuario(usuario.getId(), "SHA-CEFRAS-01", "Casa (Sensor Cefras)");
 
-            // 3. Tácito (Pasta) -> Banheiro
+            // 3. Tácito (Pasta)
             facade.vincularShaAoUsuario(usuario.getId(), "SHA-TAC-01", "Fazenda (Sensor Tácito)");
-
-            System.out.println("    3 Sensores integrados com sucesso!");
 
             // --- REGRAS ---
             System.out.println("\n>>> [PASSO 3] Configurando Alerta de Consumo Agregado...");
 
-            // Limite baixo para testar fácil
             facade.configurarRegraAlerta(new ConfigAlertaRequest(
                     usuario.getId(), 0.010, 24, Arrays.asList("EMAIL"), Arrays.asList("admin@cagepa.com.br")
             ));

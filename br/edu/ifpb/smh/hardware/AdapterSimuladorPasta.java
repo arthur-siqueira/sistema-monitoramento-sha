@@ -19,7 +19,7 @@ public class AdapterSimuladorPasta implements LeitorSHA {
         File pasta = new File(caminhoPasta);
         if (!pasta.exists()) return;
 
-        // FILTRO ATUALIZADO: Agora aceita .jpg, .jpeg e .png
+
         File[] imagens = pasta.listFiles(f -> {
             String nome = f.getName().toLowerCase();
             return (nome.endsWith(".jpg") || nome.endsWith(".jpeg") || nome.endsWith(".png"))
@@ -28,8 +28,7 @@ public class AdapterSimuladorPasta implements LeitorSHA {
 
         if (imagens == null || imagens.length == 0) return;
 
-        // Opcional: Ordenar para processar na ordem correta (1.jpeg, 2.jpeg...)
-        // Isso evita processar o 10.jpeg antes do 2.jpeg
+
         Arrays.sort(imagens, Comparator.comparingLong(File::lastModified));
 
         for (File img : imagens) {

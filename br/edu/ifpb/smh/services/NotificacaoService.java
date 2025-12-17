@@ -13,7 +13,6 @@ public class NotificacaoService {
         // Registra as estratégias disponíveis no sistema
         estrategias.put("EMAIL", new EmailStrategy());
         estrategias.put("WEBHOOK", new WebhookStrategy());
-        // Se quiser adicionar SMS depois, é só criar SmsStrategy e registrar aqui
     }
 
     public void enviarNotificacao(Alerta alerta) {

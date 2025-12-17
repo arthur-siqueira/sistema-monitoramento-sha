@@ -14,14 +14,12 @@ public class UsuarioService {
     private final Map<String, List<SHA_DTO>> shasPorUsuarioDB = new HashMap<>();
 
     public UsuarioService() {
-        // Carga inicial de dados para testes (opcional)
-        // Isso ajuda a não ter que criar usuário toda vez que rodar
         String idTeste = "123";
         usuariosDB.put(idTeste, new UsuarioDTO(idTeste, "Cliente Teste", "teste@email.com", "Rua A"));
         shasPorUsuarioDB.put(idTeste, new ArrayList<>());
     }
 
-    // --- CRUD DE USUÁRIOS [cite: 10] ---
+    // CRUD DE USUÁRIOS
 
     public UsuarioDTO criarUsuario(NovoUsuarioRequest request) {
         // Gera um ID único (simulando auto-increment ou UUID)
@@ -51,7 +49,6 @@ public class UsuarioService {
         if (existente == null) return null;
 
         // Atualiza apenas os campos permitidos
-        // Nota: Em um sistema real, faríamos getters/setters ou um novo objeto
         UsuarioDTO atualizado = new UsuarioDTO(
                 existente.getId(),
                 existente.getNome(), // Nome não muda
