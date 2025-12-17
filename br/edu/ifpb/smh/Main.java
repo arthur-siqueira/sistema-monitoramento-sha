@@ -4,73 +4,69 @@ import br.edu.ifpb.smh.dto.*;
 import br.edu.ifpb.smh.facade.MonitoramentoFacade;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
         System.out.println("==================================================");
         System.out.println("   SISTEMA DE MONITORAMENTO DE HIDRÔMETROS (SMH)  ");
-        System.out.println("   Iniciando via Console...");
+        System.out.println("   Versão Final - Smart Home Integration          ");
         System.out.println("==================================================");
 
-        // 1. Instancia a Fachada (O único ponto de contato)
         MonitoramentoFacade facade = new MonitoramentoFacade();
-
-        // 2. Inicia o motor de monitoramento (Threads de OCR)
         facade.iniciarMonitoramento();
 
         try {
-            // -----------------------------------------------------------
-            // CENÁRIO 1: CADASTRO (RF-001)
-            // -----------------------------------------------------------
-            System.out.println("\n>>> [PASSO 1] Criando Usuário e Vinculando SHAs...");
+            // CENÁRIO: UM DONO, MÚLTIPLOS SENSORES (SMART HOME)
+            System.out.println("\n>>> [PASSO 1] Criando Usuário Principal...");
 
             NovoUsuarioRequest novoUser = new NovoUsuarioRequest(
-                    "Arthur Siqueira", "123.456.789-00", "arthur@email.com", "Rua do Projeto, 100"
+                    "Arthur Siqueira", "123.456.789-00", "arthur@email.com", "Residência Principal"
             );
             UsuarioDTO usuario = facade.criarUsuario(novoUser);
+            System.out.println("    Usuário ID: " + usuario.getId());
 
-            // VINCULANDO OS SENSORES (IDs devem bater com o SensorService)
-            // Vincula o simulador de arquivo único
-            facade.vincularShaAoUsuario(usuario.getId(), "SHA-ARTHUR-01", "Jardim");
-            // Vincula o simulador de pasta
-            //facade.vincularShaAoUsuario(usuario.getId(), "SHA-TAC-01", "Cozinha");
+            // --- VINCULANDO TUDO AO MESMO USUÁRIO ---
+            System.out.println("\n>>> [PASSO 2] Vinculando Sensores à Residência...");
 
-            // -----------------------------------------------------------
-            // CENÁRIO 2: CONFIGURAÇÃO DE REGRAS (RF-003)
-            // -----------------------------------------------------------
-            System.out.println("\n>>> [PASSO 2] Configurando Regras de Alerta...");
+            // 1. Arthur (Arquivo) -> Jardim
+            facade.vincularShaAoUsuario(usuario.getId(), "SHA-ARTHUR-01", "Apartamento (Sensor Arthur)");
 
-            // Define limite baixo (0.010 m3) para testar o disparo fácil
-            List<String> canais = Arrays.asList("EMAIL", "WEBHOOK");
-            ConfigAlertaRequest config = new ConfigAlertaRequest(
-                    usuario.getId(), 0.010, 24, canais, Arrays.asList("admin@cagepa.com.br")
-            );
+            // 2. Cefras (Pasta) -> Cozinha
+            facade.vincularShaAoUsuario(usuario.getId(), "SHA-CEFRAS-01", "Casa (Sensor Cefras)");
 
-            facade.configurarRegraAlerta(config);
+            // 3. Tácito (Pasta) -> Banheiro
+            facade.vincularShaAoUsuario(usuario.getId(), "SHA-TAC-01", "Fazenda (Sensor Tácito)");
 
-            // -----------------------------------------------------------
-            // CENÁRIO 3: MONITORAMENTO EM TEMPO REAL
-            // -----------------------------------------------------------
-            System.out.println("\n>>> [SISTEMA RODANDO] Aguardando leituras dos simuladores...");
-            System.out.println("    (Abra seu simulador e gere imagens agora!)");
-            System.out.println("    Digite 'sair' para encerrar ou 'status' para ver alertas.");
+            System.out.println("    3 Sensores integrados com sucesso!");
+
+            // --- REGRAS ---
+            System.out.println("\n>>> [PASSO 3] Configurando Alerta de Consumo Agregado...");
+
+            // Limite baixo para testar fácil
+            facade.configurarRegraAlerta(new ConfigAlertaRequest(
+                    usuario.getId(), 0.010, 24, Arrays.asList("EMAIL"), Arrays.asList("admin@cagepa.com.br")
+            ));
+            System.out.println("    Monitoramento Ativo. Limite: 0.010 m³");
+
+            // --- LOOP ---
+            System.out.println("\n>>> [SISTEMA RODANDO] Aguardando leituras...");
+            System.out.println("    (Gere imagens nos 3 simuladores agora!)");
+            System.out.println("    Digite 'status' para ver alertas ou 'sair' para encerrar.\n");
 
             Scanner scanner = new Scanner(System.in);
             while (true) {
-                String comando = scanner.nextLine();
-
-                if (comando.equalsIgnoreCase("sair")) {
-                    System.out.println("Encerrando sistema...");
-                    System.exit(0);
-                }
-                else if (comando.equalsIgnoreCase("status")) {
-                    List<AlertaAtivoDTO> alertas = facade.getAlertasAtivos();
-                    System.out.println("\n--- STATUS ATUAL ---");
-                    if(alertas.isEmpty()) System.out.println("Nenhum alerta ativo. Consumo normal.");
-                    alertas.forEach(System.out::println);
-                    System.out.println("--------------------\n");
+                if (scanner.hasNext()) {
+                    String comando = scanner.nextLine();
+                    if (comando.equalsIgnoreCase("sair")) System.exit(0);
+                    else if (comando.equalsIgnoreCase("status")) {
+                        var alertas = facade.getAlertasAtivos();
+                        if(alertas.isEmpty()) System.out.println("--- Status: Consumo Normal ---");
+                        else {
+                            System.out.println("\n--- ALERTAS ATIVOS ---");
+                            alertas.forEach(System.out::println);
+                        }
+                    }
                 }
             }
 

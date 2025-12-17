@@ -1,0 +1,39 @@
+# --- Arquivos de Compilação e Maven ---
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# --- Arquivos do IntelliJ IDEA (IDE) ---
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# --- Arquivos do Sistema Operacional ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Banco de Dados (H2 Database) ---
+# Ignora os arquivos do banco de dados local para não subir dados de teste
+*.mv.db
+*.trace.db
+
+# --- Logs ---
+*.log
+hs_err_pid*
+
+# --- IMAGENS DE TESTE  ---
+# Impede que as imagens dos sensores subam para o GitHub
+# Se você tiver uma pasta "assets" ou "img" com imagens fixas do sistema,
+# você pode adicionar exceções com "!", mas para sensores, ignore tudo:
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.tif
+*.tiff
